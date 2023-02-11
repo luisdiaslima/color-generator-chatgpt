@@ -2,6 +2,10 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
+## Preview
+
+you can have fun [here](https://color-palette-generator-three.vercel.app/)
+
 ## References
 
 This project is integrated with ChatGPT by [OpenAI API](https://openai.com/api/).
