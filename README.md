@@ -8,7 +8,7 @@ you can have fun [here](https://color-palette-generator-three.vercel.app/)
 
 ## References
 
-This project is integrated with ChatGPT by [OpenAI API](https://openai.com/api/).
+This project is integrated with [GroqCloud](https://console.groq.com/).
 
 ## Recommended IDE Setup
 
