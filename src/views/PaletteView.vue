@@ -1,105 +1,113 @@
+
+
 <template>
-  <main>
+  <main class="main-container">
     <div class="palette-container">
-      <form @submit.prevent="handleChatGPT" class="palette-container__form">
-        <input
-          type="text"
-          class="palette-container__form__search"
-          placeholder="Type some vibe"
-          @input="handleSearch"
-        />
-        <button type="submit" class="palette-container__form__button">?</button>
-      </form>
+      <input
+        type="text"
+        class="palette-container__search"
+        v-model="search"
+        placeholder="Type a color or vibe..."
+        @keyup.enter="handleSearch"
+      />
 
       <div class="palette-container__colors">
-        <span v-for="(color, index) in colors" :key="index"> {{ color }} </span>
-      </div>
-      <div
-        :class="{ 'fade-in': fadeIn }"
-        class="palette-container__generated-color"
-      >
         <span
           v-for="(color, index) in colors"
-          :key="color"
-          :id="'color' + index"
+          :key="index"
+          :style="{ color: color }"
+          @click="copyToClipboard(color)"
+          class="color-label"
+        >
+          {{ color }}
+        </span>
+      </div>
+
+      <div class="palette-container__generated-color">
+        <span
+          v-for="(color, index) in colors"
+          :key="index"
+          :style="{ backgroundColor: isLoading ? 'transparent' : color }"
+          :class="{ 'shimmer-effect': isLoading }"
+          class="color-box"
         />
       </div>
-      <loader-infinite v-if="isLoading" />
     </div>
   </main>
 </template>
 
-<script>
-import axios from "axios";
-import LoaderInfinite from "../components/InfiniteLoader/Component.vue";
-export default {
-  components: { LoaderInfinite },
-  data() {
-    return {
-      colors: [],
-      fadeIn: false,
-      search: "",
-      isLoading: false,
-    };
-  },
-  mounted() {
-    this.generatePalette();
-  },
-  methods: {
-    generatePalette() {
-      for (let i = 0; i < 4; i++) {
-        const randomColor = Math.floor(Math.random() * 16777215).toString(16);
-        this.colors[i] = `#${randomColor}`.toUpperCase();
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+import Groq from "groq-sdk";
 
-        this.fadeIn = true;
-        setTimeout(() => (this.fadeIn = false), 400);
-      }
-    },
-    handleSearch(e) {
-      this.search = e.target.value;
-    },
-    async handleChatGPT() {
-      this.isLoading = true;
-      const { data } = await axios.post(
-        "https://api.openai.com/v1/completions",
+const groq = new Groq({
+  apiKey: import.meta.env.VITE_API_KEY,
+  dangerouslyAllowBrowser: true,
+});
+
+const colors = ref([]);
+const search = ref("");
+const isLoading = ref(false);
+
+onMounted(() => {
+  generateRandomPalette();
+});
+
+const generateRandomPalette = () => {
+  colors.value = Array.from({ length: 4 }, () => {
+    return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase()}`;
+  });
+};
+
+const updateColors = (newColors) => {
+  if (newColors.length > 4) {
+    colors.value = newColors.slice(0, 4);
+  } else {
+    colors.value = newColors;
+  }
+};
+
+const copyToClipboard = (color) => {
+  navigator.clipboard.writeText(color).then(() => {
+    alert(`Copied: ${color}`);
+  });
+};
+
+const handleSearch = async () => {
+  if (!search.value.trim()) {
+    generateRandomPalette();
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    const response = await groq.chat.completions.create({
+      messages: [
         {
-          model: "text-davinci-003",
-          prompt: `${import.meta.env.VITE_CHAT_GPT_QUESTION} ${this.search}`,
-          temperature: 0,
-          max_tokens: 1000,
+          role: "user",
+          content: `Give me 4 hexadecimal colors based on: ${search.value}. Return only the hex codes as an array.`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${
-              import.meta.env.VITE_CHAT_GPT_PRIVATE_KEY
-            }`,
-          },
-        }
-      );
-      const newColors = eval(data.choices[0].text);
-      this.colors = newColors;
-      this.isLoading = false;
-    },
-  },
+      ],
+      model: "llama-3.3-70b-versatile",
+    });
+
+    const hexColors = extractHexColors(response.choices[0].message.content);
+    updateColors(hexColors);
+  } catch (error) {
+    console.error("Error fetching colors:", error);
+    alert("Failed to generate palette. Please try again.");
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Extrai códigos hexadecimais de uma string
+const extractHexColors = (str) => {
+  const hexPattern = /#([0-9A-Fa-f]{3,6})\b/gi;
+  return (str.match(hexPattern) || []).map((color) => color.toUpperCase());
 };
 </script>
 
 <style lang="scss" scoped>
-@import "./styles.scss";
-
-#color0 {
-  background: v-bind("colors[0]");
-}
-
-#color1 {
-  background: v-bind("colors[1]");
-}
-
-#color2 {
-  background: v-bind("colors[2]");
-}
-
-#color3 {
-  background: v-bind("colors[3]");
-}
+@import './styles.scss'
 </style>
