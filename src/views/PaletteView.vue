@@ -7,7 +7,7 @@
         type="text"
         class="palette-container__search"
         v-model="search"
-        placeholder="Type a color or vibe..."
+        placeholder="Craft your palette..."
         @keyup.enter="handleSearch"
       />
 

@@ -8,6 +8,23 @@
   padding: 20px;
 }
 
+.background {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 300px;
+  background: linear-gradient(
+    to bottom,
+    rgba(#A1C9F2, 0.2),
+    rgba(#87CEEB, 0.2),
+    rgba(#4682B4, 0.2),
+    rgba(#6495ED, 0.2)
+  );
+  filter: blur(20px);
+  z-index: 0;
+}
+
+
 .palette-container {
   background: rgba(40, 40, 40, 0.9);
   border-radius: 15px;
@@ -99,8 +116,7 @@
       gap: 10px;
 
       .color-label {
-        padding: 0.75rem;
-        font-size: 1.1rem;
+        display: none;
       }
     }
 
